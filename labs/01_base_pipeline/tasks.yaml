@@ -1,6 +1,22 @@
+############
+# TASK CALLED (checkout) WITH TWO PARAMETER(repo-url and branch)
+#############
+
+--- # this 3 dashes are used to separate multiple definitions in a single yaml file
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: <place-name-here>
+  name: checkout 
 spec:
+  params:
+    - name: repo-url
+      description: The url of the git repo to clone
+      type: string
+    - name: branch
+      description: The branch to clone
+      type: string
   steps:
+    - name: checkout
+      image: bitnami/git:latest
+      command: [git]
+      args: ["clone", "--branch", "$(params.branch)", "$(params.repo-url)"]

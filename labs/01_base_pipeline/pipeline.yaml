@@ -1,6 +1,64 @@
+##################
+# This is a pipeline with
+# the first task to clone and checkout to the branch passed as parameters to the command(kubectl apply -f pipeline.yaml) respectively,
+# the second task to lint the code with flake8 for syntax errors
+# the third to test the code with PyUnit
+# the fourth to build the image for the repo-url parameter received
+# the fifth to deploy the built image to branch(main - default is master) of the repo-url
+# ALL THE PIPELINE TASKS REFERENCE THE echo TASK FOR NOW.
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
-metadata:  
-  name: <place-name-here>
+metadata:
+  name: cd-pipeline
 spec:
+  params:
+    - name: repo-url
+    - name: branch
+      default: "master"
   tasks:
+    - name: clone
+      taskRef:
+        name: checkout
+      params:
+      - name: repo-url
+        value: "$(params.repo-url)"
+      - name: branch
+        value: "$(params.branch)"
+
+    - name: lint
+      taskRef:
+        name: echo
+      params:
+      - name: message
+        value: "Calling Flake8 linter..."
+      runAfter:
+        - clone
+
+    - name: tests
+      taskRef:
+        name: echo
+      params:
+      - name: message
+        value: "Running unit tests with PyUnit..."
+      runAfter:
+        - lint
+
+    - name: build
+      taskRef:
+        name: echo
+      params:
+      - name: message
+        value: "Building image for $(params.repo-url) ..."
+      runAfter:
+        - tests
+
+    - name: deploy
+      taskRef:
+        name: echo
+      params:
+      - name: message
+        value: "Deploying $(params.branch) branch of $(params.repo-url) ..."
+      runAfter:
+        - build
